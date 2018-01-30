@@ -1,25 +1,22 @@
 ---
 title: "Plotting with GGPLOT2"
-author: "Tim Dennis & Reid Otsuji"
-date: "January 8, 2016"
+author: "Tim Dennis"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document: 
     toc: yes
 ---
 
-First part of this notebook based on Karthik Ram's [GGPLOT2 Lecture](https://github.com/karthik/ggplot-lecture) ([CC-By 2.0](https://creativecommons.org/licenses/by/2.0/))
-
-```{r, include=FALSE}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
 source("tools/chunk-options.R")
 opts_chunk$set(fig.path = "fig/08-plot-ggplot2-")
+library(readr)
 # Silently load in the data so the rest of the lesson works
 #gapminder <- read.csv("data/gapminder-FiveYearData.csv", header=TRUE)
 ```
-```{r}
-#install.packages('ggplot2')
-#library(ggplot2)
-```
 
+First part of this notebook based on Karthik Ram's [GGPLOT2 Lecture][karthic] ([CC-By 2.0](https://creativecommons.org/licenses/by/2.0/))
 
 GOALS: Students should be able to use ggplot2 to generate publication quality graphics and understand and use the basics of the grammar of graphics.
 
@@ -45,22 +42,99 @@ GOALS: Students should be able to use ggplot2 to generate publication quality gr
 * **scales** Define how your data will be plotted
   * continuous, discrete, log
 
+## Think in terms of variable types
+
+![Viz](http://moderndive.com/images/coggleviz.png)
+
+## Organizing your project space
+
+R gives us a concept of a project and it is good practice to create one when you start a project. 
+
+1. Go to `File` > `New project`
+2. Select `New directory` > `R project`
+3. Name a new directory on your Desktop `data-viz` click ok
+4. On the right lower pane add a `New Folder` called `data`
+
+We are ready to start. 
+
+## Notebooks in R - In-line Viz in dynamic docs
+
+1. Show diff b/t R scripts and notebooks
+2. Some basick Rmarkdown 
+3. So how to play vis - interative tinkering 
+
+## Loading Data in R 
+
+We can load data into R via multiple mechanisms: 
+
+### Datasets from base-R and packages 
+
+* Can be part of packages or base-R -- these are often set up for teaching R or as examples for how to use a package. How do you find out what's there? Use `data()`. More datasets will show after package installation and loading.
+
+```{r show-data}
+data()
+```
+
+```{r add-package-data}
+library(openintro)
+data()
+```
+
+* We can load one of these dataframes into our current session by using `data()`: 
+
+```{r load-data}
+data(diamonds)
+head(diamonds)
+#View(diamonds)
+```
+
+* Note: these are loaded into the R session but aren't saved as a file on our file system. 
+* If you want to open one of these as a `csv` you can write it out using the `write_csv`
+
+```{r write-csv}
+write_csv(diamonds, 'data/diamonds.csv')
+```
+
+### Reading data from the filesystem
+
+#### Download from the web
+
+* To demonstrate this let's first download a `csv` using the `download.file()`
+* We use the URL to a data file -- the full url including the filename for the first argument
+* For the second argument, add the path plus `/` and the file name you want to save as.
+
+```{r download-ex, eval=FALSE}
+#download.file(url, path/filename)
+download.file("https://raw.githubusercontent.com/resbaz/r-novice-gapminder-files/master/data/gapminder-FiveYearData.csv", 'data/gapminder-FiveYearData.csv')
+```
+
+#### Read the data into R
+
+* There's a family of `read` functions that read data in as a data frame
+
+```{r read-data}
+read_csv('data/gapminder-FiveYearData.csv')
+```
+
+* read_csv by itself will print out the data frame
+* we need to save it as an object in R to reuse it
+
+```{r read-data-as-obj}
+gapminder <- read_csv('data/gapminder-FiveYearData.csv')
+```
+
+
 ## First Plots with GGPLOT
 
-This famous (Fisher's or Anderson's) iris data set gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa, versicolor, and virginica.
+This famous (Fisher's or Anderson's) [iris data][iris-data] set gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa, versicolor, and virginica.
 
 
 ```{r head_iris}
 library(ggplot2)
+data(iris)
 head(iris)
 ```
 
-WE can use the `data()` function to show the available built-in data sets in R. 
-
-
-```{r show-datasets}
-data()
-```
 
 ```{r}
 ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width)) +
@@ -68,6 +142,12 @@ ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width)) +
 ```
 
 **Basic structure**
+
+```{r ggplot-tempate, eval=FALSE}
+ggplot(data = <DATA>) +
+  <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
+```
+
 
 ```{r}
 ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width)) + geom_point()
@@ -117,8 +197,10 @@ ggplot(d2, aes(carat, price, color = color)) + geom_point() + theme_gray()
 **Switch to Gapminder Data**
 
 ```{r lifeExp-vs-gdpPercap-scatter, message=FALSE}
-#gapminder <- read.csv("https://goo.gl/BtBnPg", header = T)
-gapminder <- read.csv('data/gapminder-FiveYearData.csv', header=T)
+library(readr)  #from tidyverse
+#download.file("https://goo.gl/BtBnPg", 'data/gapminder-FiveYearData.csv')
+#gapminder <- read.csv("https://goo.gl/BtBnPg")
+gapminder <- read_csv('data/gapminder-FiveYearData.csv')
 ```
 
 ```{r gap-scatter}
@@ -169,6 +251,10 @@ head(birthwt)
 ggplot(birthwt, aes(factor(race), bwt)) + geom_boxplot()
 ```
 
+```{r box-plot-x-label}
+ggplot(birthwt, aes(factor(race), bwt)) + geom_boxplot() +
+  scale_x_discrete(labels = c("white", "black", "other"))
+```
 
 ## Histograms
 
@@ -191,24 +277,30 @@ h + geom_histogram(binwidth = 8, fill = "steelblue", colour = "black")
 **Download data**
 
 ```{r download-cli-data, eval=FALSE}
-download.file('https://raw.github.com/karthikram/ggplot-lecture/master/climate.csv', 'data/climate.csv')
+#download.file('https://raw.github.com/karthikram/ggplot-lecture/master/climate.csv', 'data/climate.csv')
 #climate <- read.csv(text=RCurl::getURL(https://raw.github.com/karthikram/ggplot-lecture/master/climate.csv))
 ```
 
-* In the climate data set, `Anomaly10y` is a 10-year running average of the deviation (in Celsius) from the average 1950–1980 temperature, and `Unc10y` is the 95% confidence interval. We’ll set ymax and ymin to Anomaly10y plus or minus Unc10y (Figure 4-25):
+* In the climate data set, `Anomaly10y` is a 10-year running average of the deviation (in Celsius) from the average 1950–1980 temperature:
 
 
 ```{r line-plots}
-climate <- read.csv("data/climate.csv", header = T)
+climate <- read_csv("data/climate.csv")
 ggplot(climate, aes(Year, Anomaly10y)) +
   geom_line()
 ```
 
 **We can also plot confidence regions**
 
-* In the climate data set, `Anomaly10y` is a 10-year running average of the deviation (in Celsius) from the average 1950–1980 temperature, and `Unc10y` is the 95% confidence interval. We’ll set ymax and ymin to Anomaly10y plus or minus Unc10y (Figure 4-25):
+* In the climate data set, `Anomaly10y` is a 10-year running average of the deviation (in Celsius) from the average 1950–1980 temperature, and `Unc10y` is the 95% confidence interval. 
 
-```{r}
+> *confidence interval* gives a range of plausible values for a parameter.  It depends on a specified _confidence level_ with higher confidence levels corresponding to wider confidence intervals and lower confidence levels corresponding to narrower confidence intervals.  Common confidence levels include 90%, 95%, and 99%.
+>
+>Usually we don't just begin chapters with a definition, but *confidence intervals* are simple to define and play an important role in the sciences and any field that uses data.  You can think of a confidence interval as playing the role of a net when fishing.  Instead of just trying to catch a fish with a single spear (estimating an unknown parameter by using a single point estimate/statistic), we can use a net to try to provide a range of possible locations for the fish (use a range of possible values based around our statistic to make a plausible guess as to the location of the parameter).
+
+We’ll set `ymax` and `ymin` to Anomaly10y plus or minus Unc10y (Figure 4-25):
+
+```{r cli-confidence}
 ggplot(climate, aes(Year, Anomaly10y)) +
   geom_ribbon(aes(ymin = Anomaly10y - Unc10y, ymax = Anomaly10y + Unc10y),
               fill = "blue", alpha = .1) +
@@ -234,7 +326,7 @@ cplot + theme_gray()
 
 Using scatter plot not the best way to visualize change over time. Let's use line plot.
 
-```{r}
+```{r gap-line}
 ggplot(data = gapminder, aes(x=year, y=lifeExp, by=country, color=continent)) +
   geom_line()
 ```
@@ -267,12 +359,12 @@ global plot options in `ggplot` to the `geom_line` layer so it no longer applies
 
 ## Bar Plots
 
-```{r barplot}
+```{r barplot-iris}
 ggplot(iris, aes(Species, Sepal.Length)) +
   geom_bar(stat = "identity")
 ```
 
-```{r}
+```{r iris-gather-bar}
 library(tidyr)
 #df <- melt(iris, id.vars = "Species")
 df <- gather(iris, variable, value, -Species )
@@ -296,16 +388,16 @@ ggplot(df, aes(Species, value, fill = variable)) +
 
 Let's look at iris again. 
   
-```{r}
+```{r iris-gather}
 iris[1:2, ]
 df <- gather(iris, variable, value, -Species ) 
 ```
 
-```{r}
+```{r iris-inspect}
 df[1:2, ]
 ```
 
-```{r}
+```{r iris-bar-dodge}
 ggplot(df, aes(Species, value, fill = variable)) +
   geom_bar(stat = "identity", position = "dodge")
 ```
@@ -326,7 +418,7 @@ ggplot(d2, aes(clarity, fill = cut)) +
 * Plot a bar plot and use sign variable as the fill.
 * HINT: Look up `ifelse` function to create `clim$sign`
 
-```{r}
+```{r cli-anomal10}
 clim <- read.csv('data/climate.csv', header = TRUE)
 clim$sign <- ifelse(clim$Anomaly10y<0, FALSE, TRUE)
 # or as simple as
@@ -336,30 +428,30 @@ ggplot(clim, aes(Year, Anomaly10y)) + geom_bar(stat = "identity", aes(fill = sig
 
 ## Density Plots 
 
-```{r}
+```{r faith-density}
 ggplot(faithful, aes(waiting)) + geom_density()
 ```
 
-```{r}
+```{r faith-density-fill}
 ggplot(faithful, aes(waiting)) +
   geom_density(fill = "blue", alpha = 0.1)
 ```
 
 
-```{r}
+```{r faith-line-dens}
 ggplot(faithful, aes(waiting)) +
   geom_line(stat = "density")
 ```
 
 ## Colors
 
-```{r eval=FALSE}
+```{r color, eval=FALSE}
 aes(color = variable) 
 aes(color = "black")
 # Or add it as a scale
 scale_fill_manual(values = c("color1", "color2"))
 ```
-```{r color}
+```{r color-rbrew}
 library(RColorBrewer) 
 display.brewer.all() 
 ```
@@ -376,11 +468,10 @@ ggplot(df, aes(Species, value, fill = variable)) +
 ### Manual color scale
 ```{r manual-color}
 ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
-geom_point() +
-facet_grid(Species ~ .) +
-scale_color_manual(values = c("red", "green", "blue"))
+  geom_point() +
+  facet_grid(Species ~ .) +
+  scale_color_manual(values = c("red", "green", "blue"))
 ```
-
 
 ## Transformations and statistics
 
@@ -421,7 +512,7 @@ pwd <- ggplot(data = gapminder, aes(x = lifeExp, y = gdpPercap)) +
   geom_point() + scale_y_log10() + geom_smooth(method="lm", size=1.5)
 ```
 
-* two ways an *aesthetic* can be specified:
+* Two ways an *aesthetic* can be specified:
   1. Here we *set* the **size** aesthetic by passing it as an argument to `geom_smooth`.
   2. use the `aes` function to define a *mapping* between data variables and their visual representation.
 
@@ -435,7 +526,7 @@ ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
 
 ### Within facet 
 
-```{r}
+```{r iris-facet}
 ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
   geom_point(aes(shape = Species), size = 3) +
   geom_smooth(method = "lm") +
@@ -455,7 +546,7 @@ ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
 
 * we can split this out over multiple panels by adding a layer of **facet** panels:
 
-```{r facet}
+```{r gap-facet}
 starts.with <- substr(gapminder$country, start = 1, stop = 1)
 az.countries <- gapminder[starts.with %in% c("A", "Z"), ]
 ggplot(data = az.countries, aes(x = year, y = lifeExp, color=continent)) +
@@ -502,7 +593,7 @@ ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
 
 ### Or wrap your panels
 
-```{r}
+```{r wrap-panels}
 ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
   geom_point() +
   facet_wrap( ~ Species)
@@ -512,53 +603,55 @@ ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
 
 Themes are a great way to define custom plots.
 
-+theme()
-#### see ?theme() for more options
+`+theme()`
 
-```{r}
+#### see `?theme()` for more options
+
+```{r iris-themes-text}
 ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
-geom_point(size = 1.2, shape = 16) +
-facet_wrap( ~ Species) +
-theme(legend.key = element_rect(fill = NA),
-legend.position = "bottom",
-strip.background = element_rect(fill = NA),
-axis.title.y = element_text(angle = 0)) 
+  geom_point(size = 1.2, shape = 16) +
+  facet_wrap( ~ Species) +
+  theme(legend.key = element_rect(fill = NA),
+  legend.position = "bottom",
+  strip.background = element_rect(fill = NA),
+  axis.title.y = element_text(angle = 0)) 
 ```
-```{r}
-#install.packages('ggthemes')
+```{r add-ggthemes}
+#install.packages("ggthemes")
 library(ggthemes)
 ```
 
 ## Then add one of these themes to your plot
- + theme_stata()
- + theme_excel()
- + theme_wsj()
- + theme_solarized()
 
-```{r} 
+* `+ theme_stata()`
+* `+ theme_excel()`
+* `+ theme_wsj()`
+* `+ theme_solarized()`
+
+```{r use-themes} 
 ggplot(iris, aes(Sepal.Length, Sepal.Width, color = Species)) +
-geom_point(size = 1.2, shape = 16) +
-facet_wrap( ~ Species) +
-theme_solarized() +
-theme(legend.key = element_rect(fill = NA),
-legend.position = "bottom",
-strip.background = element_rect(fill = NA),
-axis.title.y = element_text(angle = 0)) 
+  geom_point(size = 1.2, shape = 16) +
+  facet_wrap( ~ Species) +
+  theme_solarized() +
+  theme(legend.key = element_rect(fill = NA),
+        legend.position = "bottom",
+        strip.background = element_rect(fill = NA),
+        axis.title.y = element_text(angle = 0)) 
 ```
 
 ## How to save your plots
 
-```{r eval=FALSE}
+```{r save-plot, eval=FALSE}
 ggsave('~/path/to/figure/filename.png')
 ggsave(plot1, file = "~/path/to/figure/filename.png")
 ```
 
-```{r eval=FALSE}
+```{r save-plot-size, eval=FALSE}
 ggsave(file = "/path/to/figure/filename.png", width = 6,
 height =4)
 ```
 
-```{r eval=FALSE}
+```{r save-types, eval=FALSE}
 ggsave(file = "/path/to/figure/filename.eps")
 ggsave(file = "/path/to/figure/filename.jpg")
 ggsave(file = "/path/to/figure/filename.pdf")
@@ -575,3 +668,5 @@ code to modify!
 
 [cheat]: http://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf
 [ggplot-doc]: http://docs.ggplot2.org/current/
+[iris-data]: https://en.wikipedia.org/wiki/Iris_flower_data_set
+[karthic]: https://github.com/karthik/ggplot-lecture
